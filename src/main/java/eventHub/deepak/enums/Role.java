@@ -1,6 +1,6 @@
 package eventHub.deepak.enums;
 
-public enum role {
+public enum Role {
     USER,
     ADMIN
 }

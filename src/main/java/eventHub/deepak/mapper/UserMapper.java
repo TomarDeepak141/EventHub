@@ -1,14 +1,14 @@
 package eventHub.deepak.mapper;
 
-import eventHub.deepak.dto.request.userRequest;
-import eventHub.deepak.dto.response.userResponse;
-import eventHub.deepak.entity.user;
+import eventHub.deepak.dto.request.UserRequest;
+import eventHub.deepak.dto.response.UserResponse;
+import eventHub.deepak.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
-public class userMapper {
-    public user toEntity(userRequest request){
-            user user = new user();
+public class UserMapper {
+    public User toEntity(UserRequest request){
+            User user = new User();
 
             user.setName(request.getName());
             user.setEmail(request.getEmail());
@@ -17,8 +17,8 @@ public class userMapper {
             );
             return user;
         }
-    public userResponse toResponse(user user){
-        userResponse response = new userResponse();
+    public UserResponse toResponse(User user){
+        UserResponse response = new UserResponse();
 
 
         response.setId(user.getId());

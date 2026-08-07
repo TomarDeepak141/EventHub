@@ -1,8 +1,8 @@
 package eventHub.deepak.controller;
 
-import eventHub.deepak.dto.request.userRequest;
-import eventHub.deepak.dto.response.userResponse;
-import eventHub.deepak.service.interfaces.userService;
+import eventHub.deepak.dto.request.UserRequest;
+import eventHub.deepak.dto.response.UserResponse;
+import eventHub.deepak.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/user")
-public class userController {
-    private final userService userService;
+public class UserController {
+    private final UserService userService;
 
-    public userController(userService userService) {
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<userResponse> register(
-            @Valid @RequestBody userRequest request
+    public ResponseEntity<UserResponse> register(
+            @Valid @RequestBody UserRequest request
     ) {
 
-        userResponse response = userService.register(request);
+        UserResponse response = userService.register(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

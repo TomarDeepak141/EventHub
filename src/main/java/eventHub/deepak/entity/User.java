@@ -1,5 +1,6 @@
 package eventHub.deepak.entity;
 
+import eventHub.deepak.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 @Builder
 @Table(name = "users")
 @Entity
-public class user {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,7 +36,7 @@ public class user {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private eventHub.deepak.enums.role role;
+    private Role role;
 
     private Boolean isActive;
     private LocalDateTime createdAt;
