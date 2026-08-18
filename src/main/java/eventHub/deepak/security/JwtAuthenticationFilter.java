@@ -1,6 +1,7 @@
 package eventHub.deepak.security;
 
-import eventHub.deepak.service.impl.JwtServiceImpl;
+
+import eventHub.deepak.service.interfaces.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +20,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter
         extends OncePerRequestFilter  {
 
-    private final JwtServiceImpl jwtService;
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
     public JwtAuthenticationFilter(
-            JwtServiceImpl jwtService,
+            JwtService jwtService,
             UserDetailsService userDetailsService) {
 
         this.jwtService = jwtService;
@@ -41,7 +42,8 @@ public class JwtAuthenticationFilter
             return;
         }
         String jwt= authHeader.substring(7);
-        String email = jwtService.extractEmail(jwt);if (email != null &&
+        String email = jwtService.extractEmail(jwt);
+        if (email != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
             UserDetails userDetails =
@@ -59,9 +61,10 @@ public class JwtAuthenticationFilter
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(authentication);
-                filterChain.doFilter(request, response);
-            }
-        }
 
+            }
+
+        }
+        filterChain.doFilter(request, response);
     }
 }

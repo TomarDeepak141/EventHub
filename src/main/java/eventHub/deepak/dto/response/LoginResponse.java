@@ -1,25 +1,22 @@
 package eventHub.deepak.dto.response;
 
-import eventHub.deepak.Repository.UserRepository;
-import eventHub.deepak.dto.request.LoginRequest;
-import eventHub.deepak.entity.User;
+import eventHub.deepak.enums.Role;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class LoginResponse {
-    private final LoginRequest request;
-    private final UserRepository userRepository;
-
-    public LoginResponse(LoginRequest request, UserRepository userRepository) {
-        this.request = request;
-        this.userRepository = userRepository;
-    }
-    User user = userRepository.findByEmail(request.getEmail())
-            .orElseThrow(() ->
-                    new InvalidCredentialsException("Invalid email or password"));
-
-if (!passwordEncoder.matches(
-        request.getPassword(),
-        user.getPassword())) {
-
-        throw new InvalidCredentialsException("Invalid email or password");
-    }
+    private long userId;
+    private String email;
+    private Role role;
+    private String jwt;
+    private LocalDateTime date;
 }
