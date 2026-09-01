@@ -2,10 +2,15 @@ package eventHub.deepak.dto.response;
 
 import eventHub.deepak.enums.EventStatus;
 import eventHub.deepak.enums.EventType;
+import lombok.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
+@Getter
+@Setter
+@Data
 public class EventResponse {
 
     private Long id;

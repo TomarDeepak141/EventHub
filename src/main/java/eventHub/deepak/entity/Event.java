@@ -4,6 +4,8 @@ import eventHub.deepak.enums.EventStatus;
 import eventHub.deepak.enums.EventType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -39,7 +41,10 @@ public class Event {
     @ManyToOne
     private Venue venue;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
 
