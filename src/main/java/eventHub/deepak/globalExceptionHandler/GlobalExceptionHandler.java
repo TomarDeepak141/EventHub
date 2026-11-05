@@ -87,6 +87,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleConflict(DataIntegrityViolationException ex, HttpServletRequest request) {
+        if ("POST".equals(request.getMethod()) && "/user/register".equals(request.getRequestURI())) {
+            return response(HttpStatus.CONFLICT, "An account with this email already exists. Sign in or use a different email.", request, null);
+        }
         return response(HttpStatus.CONFLICT, "The request conflicts with existing data", request, null);
     }
 

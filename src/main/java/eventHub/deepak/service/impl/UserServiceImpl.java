@@ -32,8 +32,8 @@ public class UserServiceImpl implements UserService {
 
     public UserResponse register(UserRequest request) {
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
-        if (userRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException(email);
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new EmailAlreadyExistsException();
         }
         User user = userMapper.toEntity(request);
         user.setEmail(email);
@@ -57,12 +57,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse profile(String email) {
-        return userRepository.findByEmail(email).map(userMapper::toResponse).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return userRepository.findByEmailIgnoreCase(email).map(userMapper::toResponse).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     @Override
     public UserResponse updateProfile(String email, ProfileRequest request) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setName(request.name().trim());
         return userMapper.toResponse(userRepository.save(user));
     }

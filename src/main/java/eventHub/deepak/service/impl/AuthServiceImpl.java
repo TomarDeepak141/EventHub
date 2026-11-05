@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import eventHub.deepak.globalExceptionHandler.InvalidCredentialsException;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -33,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(Locale.ROOT))
+        User user = userRepository.findByEmailIgnoreCase(request.getEmail().trim())
                 .orElseThrow(() ->
                         new InvalidCredentialsException(
                                 "Invalid email or password"));

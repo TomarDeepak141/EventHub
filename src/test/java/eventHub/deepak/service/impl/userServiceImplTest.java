@@ -59,7 +59,7 @@ class UserServiceImplTest {
 
     @Test
     void shouldRegisterSuccessfully(){
-        when(userRepository.existsByEmail(anyString()))
+        when(userRepository.existsByEmailIgnoreCase(anyString()))
                 .thenReturn(false);
         when(userMapper.toEntity(request))
                 .thenReturn(user);
@@ -72,7 +72,7 @@ class UserServiceImplTest {
         assertEquals(response.getId(), actual.getId());
         assertEquals(response.getName(), actual.getName());
         assertEquals(response.getEmail(), actual.getEmail());
-        verify(userRepository).existsByEmail(request.getEmail());
+        verify(userRepository).existsByEmailIgnoreCase(request.getEmail());
 
         verify(userMapper).toEntity(request);
 
@@ -82,16 +82,18 @@ class UserServiceImplTest {
 
         verify(userMapper).toResponse(user);
     }
-    void shouldThrowExceptionWhenEmailAlreadyExists(){
-        when(userRepository.existsByEmail(anyString()))
+    @Test
+    void shouldThrowClearConflictWhenEmailAlreadyExistsRegardlessOfCase(){
+        request.setEmail("Deepak@Gmail.com");
+        when(userRepository.existsByEmailIgnoreCase(anyString()))
                 .thenReturn(true);
         EmailAlreadyExistsException exception =
                 assertThrows(
                         EmailAlreadyExistsException.class,
                         () -> userService.register(request)
                 );
-        assertEquals("Email already exists", exception.getMessage());
-        verify(userRepository).existsByEmail(request.getEmail());
+        assertEquals("An account with this email already exists. Sign in or use a different email.", exception.getMessage());
+        verify(userRepository).existsByEmailIgnoreCase("deepak@gmail.com");
         verify(userMapper, never()).toEntity(any(UserRequest.class));
 
         verify(passwordEncoder, never()).encode(anyString());
