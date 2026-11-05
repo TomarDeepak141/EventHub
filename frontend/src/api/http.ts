@@ -1,8 +1,14 @@
 import axios from 'axios';
 import type { ApiErrorBody } from '../types/api';
 
+export function resolveApiBaseUrl(configuredBaseUrl?: string): string {
+  const candidate = (configuredBaseUrl || '/api').trim().replace(/\/+$/, '') || '/api';
+  // The local Nginx proxy consumes /api, but Railway's Spring service exposes routes at its root.
+  return /^https?:\/\//i.test(candidate) ? candidate.replace(/\/api$/i, '') : candidate;
+}
+
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
   headers: { 'Content-Type': 'application/json' },
   timeout: 15_000,
 });

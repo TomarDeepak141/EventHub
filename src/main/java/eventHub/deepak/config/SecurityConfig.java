@@ -68,16 +68,18 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/user/register",
-                                "/auth/login",
                                 "/actuator/health",
                                 "/actuator/health/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/events/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/venues/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/user/register", "/auth/login").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/events/mine").hasRole("ORGANIZER")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/events/*/reviews/eligibility").hasRole("CUSTOMER")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/events", "/events/*", "/events/*/availability", "/events/*/reviews").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/venues", "/venues/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/events/*/reviews").hasRole("CUSTOMER")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/reviews/**").hasRole("CUSTOMER")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/reviews/**").hasRole("CUSTOMER")
