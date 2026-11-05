@@ -13,6 +13,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -87,10 +88,26 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleConflict(DataIntegrityViolationException ex, HttpServletRequest request) {
-        if ("POST".equals(request.getMethod()) && "/user/register".equals(request.getRequestURI())) {
+        if ("POST".equals(request.getMethod()) && "/user/register".equals(request.getRequestURI())
+                && isUniqueConstraintViolation(ex)) {
             return response(HttpStatus.CONFLICT, "An account with this email already exists. Sign in or use a different email.", request, null);
         }
         return response(HttpStatus.CONFLICT, "The request conflicts with existing data", request, null);
+    }
+
+    private boolean isUniqueConstraintViolation(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException violation) {
+                SQLException sqlException = violation.getSQLException();
+                if (sqlException != null && "23505".equals(sqlException.getSQLState())) {
+                    return true;
+                }
+            }
+            if (cause instanceof SQLException sqlException && "23505".equals(sqlException.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
