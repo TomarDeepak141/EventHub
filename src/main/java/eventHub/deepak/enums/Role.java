@@ -1,6 +1,7 @@
 package eventHub.deepak.enums;
 
 public enum Role {
-    USER,
+    CUSTOMER,
+    ORGANIZER,
     ADMIN
 }

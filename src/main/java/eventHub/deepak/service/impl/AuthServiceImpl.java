@@ -1,6 +1,6 @@
 package eventHub.deepak.service.impl;
 
-import eventHub.deepak.Repository.UserRepository;
+import eventHub.deepak.repository.UserRepository;
 import eventHub.deepak.dto.request.LoginRequest;
 import eventHub.deepak.dto.response.LoginResponse;
 import eventHub.deepak.entity.User;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import eventHub.deepak.globalExceptionHandler.InvalidCredentialsException;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -32,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(Locale.ROOT))
                 .orElseThrow(() ->
                         new InvalidCredentialsException(
                                 "Invalid email or password"));
@@ -43,6 +44,10 @@ public class AuthServiceImpl implements AuthService {
 
             throw new InvalidCredentialsException(
                     "Invalid email or password");
+        }
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
         String token = jwtService.generateToken(user);

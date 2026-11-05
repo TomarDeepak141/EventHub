@@ -1,4 +1,4 @@
-package eventHub.deepak.Repository;
+package eventHub.deepak.repository;
 
 import eventHub.deepak.entity.Venue;
 import org.springframework.data.jpa.repository.JpaRepository;

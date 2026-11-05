@@ -1,6 +1,7 @@
 package eventHub.deepak.config;
 
 import eventHub.deepak.security.JwtAuthenticationFilter;
+import eventHub.deepak.security.ApiSecurityErrorWriter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,26 +16,30 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
-    private final UserDetailsService userDetailsService;
-    private final AuthenticationProvider authenticationProvider;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(UserDetailsService userDetailsService, AuthenticationProvider authenticationProvider, JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.userDetailsService = userDetailsService;
-        this.authenticationProvider = authenticationProvider;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiSecurityErrorWriter errorWriter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, ApiSecurityErrorWriter errorWriter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.errorWriter = errorWriter;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
 
+    @Bean
+    public AuthenticationProvider authenticationProvider(
+            UserDetailsService userDetailsService
+    ) {
         DaoAuthenticationProvider provider =
                 new DaoAuthenticationProvider(userDetailsService);
 
@@ -42,32 +47,47 @@ public class SecurityConfig {
 
         return provider;
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration
     ) throws Exception {
-
         return configuration.getAuthenticationManager();
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
+            HttpSecurity http,
+            AuthenticationProvider authenticationProvider,
+            CorsConfigurationSource corsConfigurationSource
     ) throws Exception {
 
         return http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/register",
-                                "/login",
+                                "/user/register",
+                                "/auth/login",
+                                "/actuator/health",
+                                "/actuator/health/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/events/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/venues/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/events/*/reviews").hasRole("CUSTOMER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/reviews/**").hasRole("CUSTOMER")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/reviews/**").hasRole("CUSTOMER")
+                        .requestMatchers("/wishlist/**").hasRole("CUSTOMER")
+                        .requestMatchers("/organizer/**").hasRole("ORGANIZER")
+                        .requestMatchers("/events/*/reservations", "/events/*/reservations/**", "/events/*/bookings", "/events/*/bookings/**", "/bookings/**").hasRole("CUSTOMER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/tickets/verify").hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/screens").hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers("/events/**").hasAnyRole("ADMIN", "ORGANIZER")
+                        .requestMatchers("/venues/**", "/screens/**", "/seats/**", "/seat-categories/**", "/admin/**", "/user/admin/**").hasRole("ADMIN")
 
                         .anyRequest()
                         .authenticated()
@@ -77,6 +97,11 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
+                )
+
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((request, response, exception) -> errorWriter.write(request, response, org.springframework.http.HttpStatus.UNAUTHORIZED, "Authentication is required"))
+                        .accessDeniedHandler((request, response, exception) -> errorWriter.write(request, response, org.springframework.http.HttpStatus.FORBIDDEN, "You are not allowed to perform this operation"))
                 )
 
                 .authenticationProvider(authenticationProvider)

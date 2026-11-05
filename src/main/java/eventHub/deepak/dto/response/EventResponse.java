@@ -36,4 +36,8 @@ public class EventResponse {
     private String venueName;
 
     private String city;
+    private Long screenId;
+    private String screenName;
+    private Long organizerId;
+    private String organizerEmail;
 }

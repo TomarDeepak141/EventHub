@@ -1,6 +1,6 @@
 package eventHub.deepak.service.impl;
 
-import eventHub.deepak.Repository.UserRepository;
+import eventHub.deepak.repository.UserRepository;
 import eventHub.deepak.entity.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,6 +15,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
+
     @Override
     public UserDetails loadUserByUsername(String username) {
 

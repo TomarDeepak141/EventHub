@@ -40,6 +40,8 @@ public class EventMapper {
         response.setEventStatus(event.getEventStatus());
         response.setStartTime(event.getStartTime());
         response.setVenueName(event.getVenue().getName());
+        if (event.getScreen() != null) { response.setScreenId(event.getScreen().getId()); response.setScreenName(event.getScreen().getName()); }
+        if (event.getOrganizerUser() != null) { response.setOrganizerId(event.getOrganizerUser().getId()); response.setOrganizerEmail(event.getOrganizerUser().getEmail()); }
 
         return response;
     }

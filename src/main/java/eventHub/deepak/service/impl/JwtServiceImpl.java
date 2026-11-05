@@ -6,7 +6,6 @@ import eventHub.deepak.service.interfaces.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import jakarta.annotation.PostConstruct;
 
 @Service
 public class JwtServiceImpl implements JwtService {
@@ -24,9 +24,18 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    @PostConstruct
+    void validateConfiguration() {
+        if (secret == null || secret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET must contain at least 32 UTF-8 bytes");
+        }
+        if (expiration <= 0) {
+            throw new IllegalStateException("JWT_EXPIRATION_MS must be positive");
+        }
+    }
+
     private SecretKey getSigningKey(){
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public String generateToken(User user){
@@ -60,13 +69,12 @@ public class JwtServiceImpl implements JwtService {
     public Long extractUserId(String token) {
         return
                 extractAllClaims(token)
-                        .get("userId",Long.class);
+                .get("userId", Number.class).longValue();
     }
 
     public Role extractRole(String token) {
-        return
-                extractAllClaims(token)
-                        .get("role",Role.class);
+        String role = extractAllClaims(token).get("role", String.class);
+        return role == null ? null : Role.valueOf(role);
     }
 
     public boolean validateToken(String jwt, UserDetails userDetails) {

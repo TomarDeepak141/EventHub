@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import eventHub.deepak.mapper.UserMapper;
-import eventHub.deepak.Repository.UserRepository;
+import eventHub.deepak.repository.UserRepository;
 import eventHub.deepak.entity.User;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,6 +65,7 @@ class UserServiceImplTest {
                 .thenReturn(user);
         when(passwordEncoder.encode(anyString()))
                 .thenReturn("encodedPassword");
+        when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toResponse(user))
                 .thenReturn(response);
         UserResponse actual = userService.register(request);

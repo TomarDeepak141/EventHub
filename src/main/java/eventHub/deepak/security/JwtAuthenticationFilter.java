@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import io.jsonwebtoken.JwtException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @Component
 public class JwtAuthenticationFilter
@@ -22,13 +24,16 @@ public class JwtAuthenticationFilter
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final ApiSecurityErrorWriter errorWriter;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
-            UserDetailsService userDetailsService) {
+            UserDetailsService userDetailsService,
+            ApiSecurityErrorWriter errorWriter) {
 
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.errorWriter = errorWriter;
     }
     @Override
     protected void doFilterInternal(
@@ -42,6 +47,7 @@ public class JwtAuthenticationFilter
             return;
         }
         String jwt= authHeader.substring(7);
+        try {
         String email = jwtService.extractEmail(jwt);
         if (email != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -50,7 +56,7 @@ public class JwtAuthenticationFilter
                     userDetailsService.loadUserByUsername(email);
 
 
-            if (jwtService.validateToken(jwt, userDetails)) {
+            if (userDetails.isEnabled() && jwtService.validateToken(jwt, userDetails)) {
                 Authentication authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
@@ -64,6 +70,11 @@ public class JwtAuthenticationFilter
 
             }
 
+        }
+        } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
+            SecurityContextHolder.clearContext();
+            errorWriter.write(request, response, org.springframework.http.HttpStatus.UNAUTHORIZED, "Invalid or expired bearer token");
+            return;
         }
         filterChain.doFilter(request, response);
     }
