@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
 
 import eventHub.deepak.dto.request.ProfileRequest;
 import eventHub.deepak.dto.request.UserAdminRequest;
@@ -68,8 +69,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateAccount(Long id, UserAdminRequest request) {
+    public UserResponse updateAccount(Long id, UserAdminRequest request, String actorEmail) {
         User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+        boolean targetIsAdmin = user.getRole() == Role.ADMIN;
+        boolean requestedAdmin = request.role() == Role.ADMIN;
+        if (targetIsAdmin != requestedAdmin) {
+            throw new AccessDeniedException("ADMIN roles cannot be granted or changed through account management");
+        }
+        if (user.getId().equals(userRepository.findByEmailIgnoreCase(actorEmail)
+                .map(User::getId).orElse(null))) {
+            if (user.getRole() == Role.ORGANIZER && request.role() == Role.CUSTOMER) {
+                throw new AccessDeniedException("You cannot demote your own account");
+            }
+            if (Boolean.TRUE.equals(user.getIsActive()) && Boolean.FALSE.equals(request.active())) {
+                throw new AccessDeniedException("You cannot deactivate your own account");
+            }
+        }
         user.setRole(request.role());
         user.setIsActive(request.active());
         return userMapper.toResponse(userRepository.save(user));

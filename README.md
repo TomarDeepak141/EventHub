@@ -79,9 +79,9 @@ These are capture placeholders, not checked-in screenshots.
 
 | Check | Result |
 |---|---:|
-| `mvn clean test -q` | 40 tests passed; 0 failures, errors, or skips |
+| `mvn clean test -q` | 43 tests passed; 0 failures, errors, or skips |
 | `mvn -q -DskipTests package` | Passed |
-| `npm test -- --run` | 13 tests passed |
+| `npm test -- --run` | 16 tests passed |
 | `npm run build` | Passed |
 | `node --check scripts/verify-compose.mjs` | Passed |
 
@@ -264,7 +264,7 @@ Swagger UI is at `/swagger-ui.html`; the OpenAPI document is at `/v3/api-docs`.
 
 ## Authentication and roles
 
-Register with `POST /user/register` and sign in with `POST /auth/login`. Registration always creates a `CUSTOMER`; an administrator promotes verified accounts to `ORGANIZER` using `PUT /user/admin/users/{id}`. Admins can also deactivate accounts. Authenticate with `Authorization: Bearer <jwt>`. For first-admin setup, register the intended account, set `ADMIN_BOOTSTRAP_EMAIL` to the same email in protected deployment configuration, restart the backend, then remove the variable. Public signup cannot assign privileged roles.
+Register with `POST /user/register` and sign in with `POST /auth/login`. Registration always creates a `CUSTOMER`; administrators can promote to or demote from `ORGANIZER` using `PUT /user/admin/users/{id}`. Role changes cannot grant/change an `ADMIN` role, and administrators cannot demote or deactivate their own account. Admins can deactivate other accounts. Authenticate with `Authorization: Bearer <jwt>`. For first-admin setup, register the intended account, set `ADMIN_BOOTSTRAP_EMAIL` to the same email in protected deployment configuration, restart the backend, then remove the variable. Public signup cannot assign privileged roles.
 
 ## Endpoints
 
@@ -273,7 +273,7 @@ Register with `POST /user/register` and sign in with `POST /auth/login`. Registr
 | `POST /user/register` | Public | Customer registration |
 | `POST /auth/login` | Public | Login and JWT issuance |
 | `GET /user/me`, `PUT /user/me` | Authenticated | View or update own profile name |
-| `GET /user/admin/users`, `PUT /user/admin/users/{id}` | Admin | List accounts; update role and active status |
+| `GET /user/admin/users`, `PUT /user/admin/users/{id}` | Admin | List accounts; change CUSTOMER/ORGANIZER roles and active status with protected admin/self rules |
 | `GET /events`, `GET /events/{id}` | Public | Paginated event search and details |
 | `GET /events/{id}/reviews` | Public | Paginated event reviews |
 | `GET /events/{id}/reviews/eligibility`, `POST /events/{id}/reviews` | Customer | Review eligibility and one review per completed, confirmed booking |
@@ -282,13 +282,14 @@ Register with `POST /user/register` and sign in with `POST /auth/login`. Registr
 | `GET /organizer/statistics` | Organizer | DB-backed aggregates scoped to the authenticated organizer's own events |
 | `GET /admin/statistics` | Admin | DB-backed platform counts and booking, ticket, and review aggregates |
 | `GET /events/mine` | Organizer | Paginated list of events owned by the authenticated organizer |
-| `POST /events`, `PUT /events/{id}`, `PATCH /events/{id}/status`, `DELETE /events/{id}` | Organizer owner or Admin | Manage events; organizers can manage only their own |
+| `POST /events`, `PUT /events/{id}`, `PATCH /events/{id}/status`, `DELETE /events/{id}` | Organizer owner or Admin | Manage events; new events start booking-open, and seat-category prices come from inventory already assigned to the selected screen |
 | `GET /venues`, `GET /venues/{id}` | Public | Venue reads |
 | `POST /venues`, `PUT /venues/{id}`, `DELETE /venues/{id}` | Admin | Venue CRUD |
 | `GET /screens` | Organizer or Admin | Screen summaries for event assignment and inventory |
 | `POST /screens`, `PUT /screens/{id}`, `DELETE /screens/{id}` | Admin | Screen CRUD |
 | `GET /seats?screenId={id}`, `POST /seats`, `PUT /seats/{id}`, `DELETE /seats/{id}` | Admin | Seat CRUD |
-| `GET /seat-categories`, `POST /seat-categories`, `PUT /seat-categories/{id}`, `DELETE /seat-categories/{id}` | Admin | Seat categories and pricing |
+| `GET /seat-categories` | Organizer or Admin | Read existing seat categories and server-side prices for event planning |
+| `POST /seat-categories`, `PUT /seat-categories/{id}`, `DELETE /seat-categories/{id}` | Admin | Manage seat categories and pricing |
 | `GET /events/{eventId}/availability` | Public | Event-specific available, locked, and confirmed seats |
 | `POST /events/{eventId}/reservations` | Customer | Atomically reserve 1–10 seats with a short TTL |
 | `DELETE /events/{eventId}/reservations/{reservationToken}` | Owning Customer | Release the reservation or cancel its pending booking |

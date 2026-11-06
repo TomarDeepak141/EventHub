@@ -65,9 +65,12 @@ public class UserController {
 
     @PutMapping("/admin/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
-    public UserResponse updateAccount(@PathVariable Long id, @Valid @RequestBody UserAdminRequest request) {
-        return userService.updateAccount(id, request);
+    @Operation(summary = "Update an account role and active state",
+            description = "Roles may change only between CUSTOMER and ORGANIZER. ADMIN roles are immutable; administrators cannot demote or deactivate their own account.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    public UserResponse updateAccount(@PathVariable Long id, @Valid @RequestBody UserAdminRequest request,
+                                      Authentication authentication) {
+        return userService.updateAccount(id, request, authentication.getName());
     }
 
 }

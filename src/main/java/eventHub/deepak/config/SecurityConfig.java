@@ -88,6 +88,7 @@ public class SecurityConfig {
                         .requestMatchers("/events/*/reservations", "/events/*/reservations/**", "/events/*/bookings", "/events/*/bookings/**", "/bookings/**").hasRole("CUSTOMER")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/tickets/verify").hasAnyRole("ORGANIZER", "ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/screens").hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/seat-categories").hasAnyRole("ORGANIZER", "ADMIN")
                         .requestMatchers("/events/**").hasAnyRole("ADMIN", "ORGANIZER")
                         .requestMatchers("/venues/**", "/screens/**", "/seats/**", "/seat-categories/**", "/admin/**", "/user/admin/**").hasRole("ADMIN")
 

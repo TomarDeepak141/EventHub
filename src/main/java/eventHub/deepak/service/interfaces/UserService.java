@@ -15,7 +15,7 @@ public interface UserService {
 
     UserResponse updateProfile(String email, ProfileRequest request);
 
-    UserResponse updateAccount(Long id, UserAdminRequest request);
+    UserResponse updateAccount(Long id, UserAdminRequest request, String actorEmail);
 
     List<UserResponse> listUsers();
 }
