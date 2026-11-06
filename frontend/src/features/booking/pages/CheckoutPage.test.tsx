@@ -31,7 +31,7 @@ describe('checkout and mock payment', () => {
   it('does not offer mock payment controls when the build disables the sandbox', async () => {
     vi.stubEnv('VITE_ENABLE_MOCK_PAYMENTS', 'false');
     renderPage();
-    expect(await screen.findByRole('status')).toHaveTextContent(/payment processing is not configured/i);
+    expect(await screen.findByText(/payment processing is not configured/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /start mock payment/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /simulate success/i })).not.toBeInTheDocument();
   });

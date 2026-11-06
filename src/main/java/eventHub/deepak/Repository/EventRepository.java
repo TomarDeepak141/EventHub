@@ -6,9 +6,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import eventHub.deepak.enums.EventType;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event,Long>, JpaSpecificationExecutor<Event> {
     Page<Event> findByOrganizerUserId(Long organizerUserId, Pageable pageable);
     long countByOrganizerUserId(Long organizerUserId);
+    boolean existsByNameIgnoreCaseAndEventType(String name, EventType eventType);
 }

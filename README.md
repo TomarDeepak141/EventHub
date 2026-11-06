@@ -55,11 +55,11 @@ Role checks and ownership checks are enforced by the backend; frontend route gua
 
 ### Demo flow
 
-1. Start the Compose stack and optionally load the fictional catalog seed described below.
+1. Start the Compose stack and set `SEED_DEMO_CATALOG=true` if you want the built-in fictional catalog loaded at backend startup.
 2. Register a customer account, browse an event, choose available seats, and follow the reservation countdown.
 3. In the local `demo` profile, complete the mock checkout with a simulated outcome; the confirmation page refreshes backend state before showing tickets and QR codes.
 4. Visit the customer dashboard to inspect booking history, payment status, tickets, and saved events. Reviews unlock only after a confirmed booking and event completion.
-5. Use provisioned organizer/admin accounts to explore event management, ticket scanning, inventory controls, and their scoped statistics. No privileged demo account is created by default.
+5. After registering the account you intend to use, set `ADMIN_BOOTSTRAP_EMAIL` to that exact email and restart the backend once to grant that existing active account the ADMIN role. Remove the variable after promotion. No privileged account or password is created by the application.
 
 ### Screenshot placeholders
 
@@ -75,15 +75,17 @@ Add captured UI images under `docs/screenshots/` when a local stack is available
 
 These are capture placeholders, not checked-in screenshots.
 
-### Latest verification (2026-11-05)
+### Latest verification (2026-11-06)
 
 | Check | Result |
 |---|---:|
-| `mvn clean test -q` | 28 tests passed; 0 failures, errors, or skips |
+| `mvn clean test -q` | 40 tests passed; 0 failures, errors, or skips |
 | `mvn -q -DskipTests package` | Passed |
-| `npm test -- --run` | 9 tests passed |
+| `npm test -- --run` | 13 tests passed |
 | `npm run build` | Passed |
 | `node --check scripts/verify-compose.mjs` | Passed |
+
+The current backend suite includes repeat-run catalog seeding and exact-email administrator-bootstrap coverage. The catalog creates no users or booking/payment data; both production startup mechanisms remain disabled unless their explicit environment variables are set.
 
 The H2 suite and in-memory reservation-store tests are not evidence of live infrastructure verification. The local Compose stack was verified on 2026-11-05; see the Docker guide below. The full transaction/concurrency verifier is still pending.
 
@@ -139,7 +141,13 @@ docker compose ps
 docker compose logs -f backend
 ```
 
-Open the frontend at `http://localhost:8088` (or the `HTTP_PORT` set in `.env`). The Nginx `/api/` route removes the prefix before forwarding to Spring, so the browser uses the same-origin API proxy. API docs are available at `http://localhost:8088/api/swagger-ui.html`; `/healthz` checks Nginx, and the backend readiness health check includes PostgreSQL and Redis. The first start applies Flyway migrations to the empty PostgreSQL volume. Register customer accounts in the UI. To exercise event creation and role-specific dashboards, use existing organizer/admin accounts or provision the first admin through a trusted database/operations process; the stack intentionally does not create a privileged default account.
+Open the frontend at `http://localhost:8088` (or the `HTTP_PORT` set in `.env`). The Nginx `/api/` route removes the prefix before forwarding to Spring, so the browser uses the same-origin API proxy. API docs are available at `http://localhost:8088/api/swagger-ui.html`; `/healthz` checks Nginx, and the backend readiness health check includes PostgreSQL and Redis. The first start applies Flyway migrations to the empty PostgreSQL volume. Register customer accounts in the UI. To explore the built-in fictional catalog, set `SEED_DEMO_CATALOG=true` in local `.env` before starting or restarting the backend. To explore admin-only screens, register the intended account first, set `ADMIN_BOOTSTRAP_EMAIL` to that email, and restart the backend; the bootstrap never creates an account or changes a password.
+
+### Opt-in application seed and administrator bootstrap
+
+`SEED_DEMO_CATALOG` defaults to `false`. When explicitly set to `true`, the startup seeder adds exactly four future-dated, richly described events for each of Concert, Theatre, Movie, Sports, Standup, and Workshop (24 total), with stable Unsplash image URLs. It also ensures six demo venues and screens, 64 seats per screen, and four demo seat categories with server-side prices. Re-running it reuses existing named records and skips existing event names/types; it creates no accounts, bookings, tickets, or payments and does not modify existing category prices.
+
+`ADMIN_BOOTSTRAP_EMAIL` is a separate opt-in startup mechanism. It promotes only the already registered account matching that email (case-insensitively) to `ADMIN`. It never creates a user, changes a password, or changes any other account. If the account is not registered yet, startup makes no change; set the variable after registration and restart the backend. Remove it after a successful promotion so it cannot re-promote the account if its role is later changed. Protect this variable like an administrator credential.
 
 To add fictional events and seats for local browsing, manually load the optional catalog seed after the backend has completed Flyway migrations. The script requires an explicit switch and a typed confirmation, and only operates on the running local Compose `postgres` service:
 
@@ -147,7 +155,7 @@ To add fictional events and seats for local browsing, manually load the optional
 .\scripts\seed-demo.ps1 -ConfirmDemoSeed
 ```
 
-The seed is never applied automatically and contains no users, password hashes, admin account, bookings, or payment data. It is intended only for a disposable local database. The guarded script reads the local Compose database/user settings from `.env`.
+This separate PowerShell seed script is manual and only targets the local Compose database. It contains no users, password hashes, admin account, bookings, or payment data. The guarded script reads the local Compose database/user settings from `.env`.
 
 For the organizer ticket-scan check, register `organizer@example.test` through the local UI first, then promote that local account and attach it to the seeded event. These SQL commands are for the localhost-bound disposable Compose database only; they deliberately do not create an admin account:
 
@@ -202,6 +210,8 @@ Provide these backend environment variables from deployment configuration:
 | `CORS_ALLOWED_ORIGINS` | Comma-separated exact browser origins, with scheme and optional port; no paths or wildcards |
 | `JPA_DDL_AUTO` | `validate` |
 | `JPA_SHOW_SQL` | `false` |
+| `SEED_DEMO_CATALOG` | Optional; set `true` only when intentionally loading the fictional 24-event catalog |
+| `ADMIN_BOOTSTRAP_EMAIL` | Optional; exact email of a previously registered account to promote; remove after success |
 
 For same-origin hosting behind Nginx, leave `CORS_ALLOWED_ORIGINS` empty. For a separately hosted browser client, list only its trusted origins. CORS does not enable credential cookies; bearer authorization headers are allowed. Do not expose PostgreSQL, Redis, or the backend directly to the public internet. Terminate HTTPS at a trusted reverse proxy and route browser API traffic through that proxy.
 
@@ -254,7 +264,7 @@ Swagger UI is at `/swagger-ui.html`; the OpenAPI document is at `/v3/api-docs`.
 
 ## Authentication and roles
 
-Register with `POST /user/register` and sign in with `POST /auth/login`. Registration always creates a `CUSTOMER`; an administrator promotes verified accounts to `ORGANIZER` using `PUT /user/admin/users/{id}`. Admins can also deactivate accounts. Authenticate with `Authorization: Bearer <jwt>`. New deployments must provision the first `ADMIN` through a trusted database/operations process; public signup cannot assign privileged roles.
+Register with `POST /user/register` and sign in with `POST /auth/login`. Registration always creates a `CUSTOMER`; an administrator promotes verified accounts to `ORGANIZER` using `PUT /user/admin/users/{id}`. Admins can also deactivate accounts. Authenticate with `Authorization: Bearer <jwt>`. For first-admin setup, register the intended account, set `ADMIN_BOOTSTRAP_EMAIL` to the same email in protected deployment configuration, restart the backend, then remove the variable. Public signup cannot assign privileged roles.
 
 ## Endpoints
 
